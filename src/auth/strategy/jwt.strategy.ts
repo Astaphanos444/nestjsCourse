@@ -2,14 +2,20 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy){
-    validate(...args: any[]): unknown {
-        throw new Error("Method not implemented.");
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt'){
+    async validate(payload: {sub:number, email:string}){
+        const user = await this.prisma.user.findUnique({
+            where: {
+                id: payload.sub
+            }
+        });
+        return user;
     }
     
-    constructor(config: ConfigService) {
+    constructor(config: ConfigService, private prisma: PrismaService) {
         const secret = config.get('JWT_SECRET'); 
 
         super({
